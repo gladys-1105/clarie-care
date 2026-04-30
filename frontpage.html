@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<title>Clarie Care</title>
+<style>
+* 
+{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+body 
+{
+    height: 100vh;
+    display: flex;
+    background: linear-gradient(to right, #2fa4a9, #4fd1a5);
+}
+.left 
+{
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.left img 
+{
+   width: 80%;
+   border-radius: 58% 42% 70% 30% / 30% 60% 40% 70%;
+   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+   transition: 0.5s;
+}
+.left img:hover 
+{
+    transform: scale(1.05) rotate(-3deg);
+    border-radius: 40% 60% 30% 70% / 60% 30% 70% 40%;
+}
+.right 
+{
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.box 
+{
+    background: rgba(255,255,255,0.1);
+    padding: 40px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    width: 320px;
+    text-align: center;
+}
+h2 
+{
+    margin-bottom: 20px;
+}
+.input-box 
+{
+    margin-bottom: 15px;
+}
+input 
+{
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+}
+button 
+{
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 20px;
+    background: white;
+    color: #2fa4a9;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:hover 
+{
+    opacity: 0.8;
+}
+.toggle 
+{
+    margin-top: 15px;
+    font-size: 14px;
+}
+.toggle span 
+{
+    color: yellow;
+    cursor: pointer;
+    font-weight: bold;
+}
+#registerForm 
+{
+    display: none;
+}
+.password-box 
+{
+    position: relative;
+}
+.password-box input 
+{
+    width: 100%;
+    padding: 10px;
+    padding-right: 40px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+}
+.eye 
+{
+    position: absolute;
+    right: 12px;  
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #2fa4a9;
+    font-size: 16px;
+}
+</style>
+</head>
+<body>
+<div class="left">
+    <img src="cariecare.png" alt="image">
+</div>
+<div class="right">
+    <div class="box">
+        <div id="loginForm">
+            <h2>Login</h2>
+            <div class="input-box">
+                <input type="text"  id="loginUser" placeholder="Username">
+            </div>
+            <div class="input-box password-box">
+                <input type="password" id="loginPass" placeholder="Password">
+                <i class="fa-solid fa-eye eye" onclick="togglePassword('loginPass', this)"></i>
+            </div>
+            <button onclick="login()">Login</button>
+            <div class="toggle">
+                Don't have an account? 
+                <span onclick="showRegister()">Register</span>
+            </div>
+        </div>
+        <div id="registerForm">
+            <h2>Register</h2>
+            <div class="input-box">
+                <input type="text" id="regUser" placeholder="Username">
+            </div>
+            <div class="input-box">
+                <input type="email" id="regEmail" placeholder="Email">
+            </div>
+            <div class="input-box password-box">
+                <input type="password" id="regPass" placeholder="Password">
+                <i class="fa-solid fa-eye eye" onclick="togglePassword('regPass', this)"></i>
+            </div>
+            <button onclick="register()">Register</button>
+            <div class="toggle">
+                Already have an account? 
+                <span onclick="showLogin()">Login</span>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function showRegister() 
+{
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("registerForm").style.display = "block";
+}
+function showLogin() 
+{
+    document.getElementById("registerForm").style.display = "none";
+    document.getElementById("loginForm").style.display = "block";
+}
+function login() 
+{
+    let user = document.getElementById("loginUser").value;
+    let pass = document.getElementById("loginPass").value;
+    if (user === "" || pass === "") 
+    {
+        alert("Please fill all fields!");
+        return;
+    }
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let validUser = users.find(u => u.username === user && u.password === pass);
+    if (validUser) 
+    {
+        alert("Login Successful 🎉");
+        localStorage.setItem("currentUser", user);
+        window.location.href = "home.html";
+    } 
+    else 
+    {
+        alert("Invalid Username or Password ❌");
+    }
+}
+function register() 
+{
+    let user = document.getElementById("regUser").value;
+    let email = document.getElementById("regEmail").value;
+    let pass = document.getElementById("regPass").value;
+    if (user === "" || email === "" || pass === "") 
+    {
+        alert("Please fill all fields!");
+        return;
+    }
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let exists = users.some(u => u.username === user);
+    if (exists) 
+    {
+        alert("Username already exists");
+        return;
+    }
+    users.push({
+        username: user,
+        email: email,
+        password: pass
+    });
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Register Successful 🎉");
+    showLogin();
+}
+function togglePassword(id, icon) 
+{
+    let input = document.getElementById(id);
+    if (input.type === "password") 
+    {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } 
+    else 
+    {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+}
+</script>
+</body>
+</html>

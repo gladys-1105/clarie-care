@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaccine Remainder System</title>
+    <style>
+        body 
+        { 
+            font-family: Arial, sans-serif; 
+            background-color: #f0f8ff; 
+        }
+        .popup 
+        {
+            position: fixed; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%;
+            display: none; 
+            z-index: 9999; 
+            background: rgba(0,0,0,0.45); 
+            animation: fadeIn 0.35s;
+        }
+        .popup-content 
+        {
+            background: linear-gradient(135deg, #e0ffff, #87ceeb);
+            color: #333; 
+            border-radius: 12px; 
+            padding: 20px; 
+            max-width: 450px;
+            margin: 10% auto; 
+            text-align: center; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+        }
+        .close 
+        { 
+            float: right; 
+            font-size: 26px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            color: #004d40; 
+        }
+        .close:hover 
+        { 
+            color: #b22222; 
+        }
+        .v-item 
+        {
+            background: #fff; 
+            margin-bottom: 8px; 
+            padding: 10px 15px; 
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center; 
+            border-left: 6px solid #00ced1;
+        }
+        .v-item .meta 
+        { 
+            font-size: 0.93em; 
+            color: #008b8b; 
+            margin-top: 4px; 
+        }
+        .v-item .actions button 
+        {
+            margin-left: 8px; 
+            padding: 6px 10px; 
+            border-radius: 8px; 
+            cursor: pointer;
+            background: #008b8b; 
+            color: white; 
+            border: none; 
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .v-item .actions button:hover 
+        { 
+            background-color: #00695c; 
+        }
+        .v-item .actions button.undoBtn 
+        { 
+            background: #d3d3d3; 
+            color: #333; 
+        }
+        .v-item .actions button.undoBtn:hover 
+        { 
+            background-color: #bdbdbd; 
+        }
+        #vDetails 
+        {
+            text-align: left; 
+            border-top: 1px solid #004d40; 
+            padding-top: 10px; 
+            margin-top: 10px;
+            font-size: 0.95em;
+        }
+        #vDetails strong 
+        { 
+            color: #004d40; 
+        }
+        @keyframes fadeIn 
+        { from {opacity: 0;} to {opacity: 1;} }
+    </style>
+</head>
+<body>
+    <div id="vaccineApp" style="max-width:900px; margin:20px auto; padding:16px;">
+        <h2 style="color:#004d40; text-align:center;">Vaccine Reminder</h2>
+
+        <div id="dobBlock" style="margin-bottom:20px; padding:16px; border-radius:12px; 
+            background: linear-gradient(135deg, #a0ffff, #40e0d0); box-shadow:0 4px 15px rgba(0,0,0,0.25); display:flex; align-items:center; gap:12px;">
+            <img src="vaccine.png" alt="Injection Logo" style="width:50px; height:50px; border-radius: 50%;"> 
+            <div style="flex:1;">
+                <label for="dob" style="font-weight:600; color:#004d40; font-size:1em;">Child's Date of Birth: </label><br>
+                <input id="dob" type="date" style="padding:8px 10px; border-radius:8px; border:1px solid #008b8b; font-size:0.95em; margin-top: 5px;">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <button id="saveDobBtn" style="padding:8px 12px; border-radius:8px; background:#00ced1; color:#fff; border:none; cursor:pointer; font-weight: bold;">Generate Schedule</button>
+                <button id="clearBtn" style="padding:8px 12px; border-radius:8px; background:#20b2aa; color:#fff; border:none; cursor:pointer; font-weight: bold;">Clear Data</button>
+            </div>
+        </div>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:350px;">
+                <h3 style="color:#004d40;">Upcoming Vaccines</h3>
+                <ul id="upcomingList" style="list-style:none; padding:0;"></ul>
+            </div>
+
+            <div style="flex:1; min-width:350px;">
+                <h3 style="color:#004d40;">Completed Vaccines</h3>
+                <ul id="completedList" style="list-style:none; padding:0;"></ul>
+            </div>
+        </div>
+        
+        <p style="margin-top: 30px; padding: 15px; border: 2px solid #b22222; border-radius: 10px; background-color: #ffcccc; color: #b22222; font-weight: bold; text-align: center;">
+            !!! IMPORTANT SAFETY DISCLAIMER !!!<br>
+            This system is for informational and educational purposes only. It is NOT a substitute for professional medical advice, diagnosis, or treatment. Always consult a licensed healthcare provider for questions regarding medical conditions or immunization schedules.
+        </p>
+    </div>
+
+    <div id="vPopup" class="popup">
+        <div class="popup-content">
+            <span id="closeVPopup" class="close">&times;</span>
+            <h2 style="color:#004d40; margin-top:0;">
+                Vaccination Reminder <span id="vProgress" style="font-size:0.95em; margin-left:8px; color:#00695c"></span>
+            </h2>
+            <p id="vText" style="font-size:1.1em; color:#002b36; font-weight: bold;"></p>
+            
+            <div id="vDetails"></div>
+
+            <div style="margin-top:20px; display: flex; justify-content: center; gap: 15px;">
+                <button id="markDoneBtn" style="padding:10px 18px; border-radius:10px; cursor:pointer; background:#2e8b57; color:white; border:none; font-size:1em;">Mark Done</button>
+                <button id="snoozeBtn" style="padding:10px 18px; border-radius:10px; cursor:pointer; background:#ffa500; color:white; border:none; font-size:1em;">Snooze 1 Day</button>
+            </div>
+        </div>
+    </div>
+    <script src="vaccineData.js"></script>
+    <script>
+    (function()
+    {
+        function daysFrom(dob, days) {
+            const dt = new Date(dob);
+            dt.setDate(dt.getDate() + days);
+            return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+        }
+        function fmtDate(d) {
+            if (!d) return "";
+            const mm = String(d.getMonth()+1).padStart(2,'0');
+            const dd = String(d.getDate()).padStart(2,'0');
+            return `${d.getFullYear()}-${mm}-${dd}`;
+        }
+        function todayDate() {
+            const t = new Date();
+            return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+        }
+        const DOB_KEY = "basic_vax_dob";
+        const SCHEDULE_KEY = "basic_vax_schedule";
+        const COMPLETED_KEY = "basic_vax_completed";
+
+        const dobEl = document.getElementById("dob");
+        const saveDobBtn = document.getElementById("saveDobBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const upcomingList = document.getElementById("upcomingList");
+        const completedList = document.getElementById("completedList");
+        const vPopup = document.getElementById("vPopup");
+        const vText = document.getElementById("vText");
+        const vProgress = document.getElementById("vProgress");
+        const vDetails = document.getElementById("vDetails");
+        const closeVPopup = document.getElementById("closeVPopup");
+        const markDoneBtn = document.getElementById("markDoneBtn");
+        const snoozeBtn = document.getElementById("snoozeBtn");
+        function loadSchedule() { return JSON.parse(localStorage.getItem(SCHEDULE_KEY) || "[]"); }
+        function loadCompleted() { return JSON.parse(localStorage.getItem(COMPLETED_KEY) || "[]"); }
+        function saveSchedule(s) { localStorage.setItem(SCHEDULE_KEY, JSON.stringify(s)); }
+        function saveCompleted(c) { localStorage.setItem(COMPLETED_KEY, JSON.stringify(c)); }
+
+        function buildAndSaveSchedule(dobStr) {
+            const schedule = VACCINE_DATABASE.map(item => {
+                const due = daysFrom(dobStr, item.offsetDays);
+                return {
+                    name: item.name,
+                    dueDateISO: fmtDate(due),
+                    done: false,
+                    snoozedUntil: null,
+                    details: item 
+                };
+            });
+            localStorage.setItem(SCHEDULE_KEY, JSON.stringify(schedule));
+            localStorage.setItem(DOB_KEY, dobStr);
+            localStorage.setItem(COMPLETED_KEY, JSON.stringify([]));
+            renderAll();
+        }
+        function markAsDone(item) {
+            const schedule = loadSchedule();
+            const completed = loadCompleted();
+            const index = schedule.findIndex(s => s.name === item.name && s.dueDateISO === item.dueDateISO);
+
+            if (index > -1 && !schedule[index].done) {
+                schedule[index].done = true;
+                completed.push(schedule[index]);
+                saveSchedule(schedule);
+                saveCompleted(completed);
+                renderAll();
+            }
+            hidePopup();
+        }
+        function snoozeItem(item) {
+            const schedule = loadSchedule();
+            const index = schedule.findIndex(s => s.name === item.name && s.dueDateISO === item.dueDateISO);
+            
+            if (index > -1) {
+                const currentSnooze = new Date(schedule[index].snoozedUntil || schedule[index].dueDateISO);
+                currentSnooze.setDate(currentSnooze.getDate() + 1); 
+                schedule[index].snoozedUntil = fmtDate(currentSnooze);
+                saveSchedule(schedule);
+                renderAll();
+            }
+            hidePopup();
+        }
+        function undoDone(item) {
+            let schedule = loadSchedule();
+            let completed = loadCompleted();
+            completed = completed.filter(c => !(c.name === item.name && c.dueDateISO === item.dueDateISO));
+            const index = schedule.findIndex(s => s.name === item.name && s.dueDateISO === item.dueDateISO);
+            if (index > -1) {
+                schedule[index].done = false;
+                schedule[index].snoozedUntil = null;
+            }
+            saveSchedule(schedule);
+            saveCompleted(completed);
+            renderAll();
+        }
+        function renderAll() {
+            const schedule = loadSchedule();
+            const completed = loadCompleted();
+            const now = todayDate();
+
+            const upcoming = schedule.filter(s => !s.done).sort((a,b) => new Date(a.dueDateISO) - new Date(b.dueDateISO));
+            const doneList = schedule.filter(s => s.done).sort((a,b) => new Date(a.dueDateISO) - new Date(b.dueDateISO));
+
+            upcomingList.innerHTML = "";
+            upcoming.forEach(item => {
+                const li = document.createElement("li");
+                li.className = "v-item";
+                const due = new Date(item.snoozedUntil || item.dueDateISO);
+                let dueText = `Due on ${fmtDate(due)}`;
+                let itemClass = "";
+                
+                if (due < now) {
+                    dueText = `<span style="color:#b22222; font-weight:bold;">OVERDUE since ${fmtDate(due)}</span>`;
+                    itemClass = "overdue-item";
+                } else if (due.getTime() === now.getTime()) {
+                    dueText = `<span style="color:#ff8c00; font-weight:bold;">DUE TODAY</span>`;
+                    itemClass = "due-today-item";
+                }
+
+                li.innerHTML = `<div>
+                                    <div style="font-weight:600;color:#004d40">${item.name}</div>
+                                    <div class="meta">${dueText} (Approx. Age: ${item.details.ageText})</div>
+                                </div>
+                                <div class="actions">
+                                    <button class="markBtn" data-name="${item.name}" data-due="${item.dueDateISO}">Done</button>
+                                </div>`;
+                li.querySelector(".markBtn").addEventListener("click", () => markAsDone(item));
+                upcomingList.appendChild(li);
+            });
+
+            completedList.innerHTML = "";
+            doneList.forEach(item => {
+                const li = document.createElement("li");
+                li.className = "v-item";
+                li.style.borderLeft = '6px solid #2e8b57';
+                li.innerHTML = `<div>
+                                    <div style="font-weight:600;color:#00695c">${item.name}</div>
+                                    <div class="meta">Completed (Original Due: ${fmtDate(new Date(item.dueDateISO))})</div>
+                                </div>
+                                <div class="actions">
+                                    <button class="undoBtn" data-name="${item.name}" data-due="${item.dueDateISO}">Undo</button>
+                                </div>`;
+                li.querySelector(".undoBtn").addEventListener("click", () => undoDone(item));
+                completedList.appendChild(li);
+            });
+
+            const firstDue = upcoming.find(s => {
+                const due = new Date(s.snoozedUntil || s.dueDateISO);
+                return due <= now;
+            });
+
+            const totalCount = schedule.length;
+            const completedCount = doneList.length;
+            vProgress.innerText = `(${completedCount}/${totalCount} completed)`;
+
+            if (firstDue) showPopupFor(firstDue);
+            else hidePopup();
+        }
+
+        function showPopupFor(item) {
+            const details = item.details; 
+            const due = new Date(item.snoozedUntil || item.dueDateISO);
+            const now = todayDate();
+            const dueText = (due <= now) ? `Due now / overdue since ${fmtDate(due)}` : `Due on ${fmtDate(due)}`;
+
+            vText.innerHTML = `<span style="font-weight:bold; color:#004d40;">${item.name}</span> — ${dueText}`;
+            vDetails.innerHTML = `
+                <p style="margin: 4px 0;"><strong>Approximate Age:</strong> ${details.ageText}</p>
+                <p style="margin: 4px 0;"><strong>Common Side Effects:</strong> ${details.sideEffects}</p>
+                <p style="margin: 4px 0; color: #b22222; font-weight: bold;"><strong>!!! SAFETY WARNING !!!:</strong> ${details.redFlags}</p>
+                <p style="margin: 8px 0 0 0;">(Source Data: ${details.source})</p>
+            `;
+
+            markDoneBtn.dataset.name = item.name;
+            markDoneBtn.dataset.due = item.dueDateISO;
+            snoozeBtn.dataset.name = item.name;
+            snoozeBtn.dataset.due = item.dueDateISO;
+            vPopup.style.display = "block";
+        }
+        function hidePopup() { 
+            vPopup.style.display = "none";
+        }
+        (function init(){
+            const savedDob = localStorage.getItem(DOB_KEY);
+            if (savedDob) {
+                dobEl.value = savedDob;
+                if (localStorage.getItem(SCHEDULE_KEY)) {
+                    renderAll();
+                } else {
+                    buildAndSaveSchedule(savedDob);
+                }
+            }
+        })();
+        saveDobBtn.addEventListener("click", () => {
+            if (dobEl.value) {
+                buildAndSaveSchedule(dobEl.value);
+                alert("Date of Birth saved and schedule generated!");
+            } else {
+                alert("Please select a valid date.");
+            }
+        });
+        clearBtn.addEventListener("click", () => {
+            localStorage.clear(); 
+            dobEl.value = "";
+            upcomingList.innerHTML = "";
+            completedList.innerHTML = "";
+            vProgress.innerText = "";
+            alert("All stored data cleared. System reset.");
+        });        
+        closeVPopup.addEventListener("click", hidePopup);        
+        markDoneBtn.addEventListener("click", (e) => {
+            markAsDone({ name: e.target.dataset.name, dueDateISO: e.target.dataset.due });
+        });
+        
+        snoozeBtn.addEventListener("click", (e) => {
+            snoozeItem({ name: e.target.dataset.name, dueDateISO: e.target.dataset.due });
+        });
+    })();
+</script>
